@@ -10,23 +10,15 @@ from epub_summary.config.chat_openai import ChatOpenAIConfig
 
 
 class ChapterRevised(BaseModel):
-    """Revised chapter of a book.
-
-    The revision should shorten the chapter roughly by half.
-    Maintain all the pertinent details to be able to follow the story.
-    Remove on the nose narration, and improve the overall quality of the
-    prose, as would a book editor.
-
-    Provide a short summary of the chapter as well.
-    """
+    """Revised chapter of a book."""
 
     summary: str = Field(..., description="The summary of the revised chapter.")
     revised_chapter: str = Field(..., description="The revised chapter.")
 
 
+# You need to shorten the chapter roughly by half. \
 chapter_revised_template = """You are a book editor. \
 You have a chapter to revise. \
-You need to shorten the chapter roughly by half. \
 Maintain all the pertinent details to be able to follow the story. \
 Remove on the nose narration, and improve the overall quality of the prose, as would a book editor. \
 
