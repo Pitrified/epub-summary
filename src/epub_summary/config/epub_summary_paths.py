@@ -13,14 +13,15 @@ class EpubSummaryPaths:
     def __init__(
         self,
     ) -> None:
-        """Load the config for data folders."""
-        self.load_config()
+        """Load the paths for the project."""
+        self.load_paths()
 
-    def load_config(self) -> None:
+    def load_paths(self) -> None:
         """Load the config for data folders."""
-        self.load_common_config_pre()
+        self.load_repo_paths()
+        self.load_external_paths()
 
-    def load_common_config_pre(self) -> None:
+    def load_repo_paths(self) -> None:
         """Pre load the common config."""
         # src folder of the package
         self.src_fol = Path(epub_summary.__file__).parent
@@ -32,6 +33,10 @@ class EpubSummaryPaths:
         self.data_fol = self.root_fol / "data"
         # static
         self.static_fol = self.root_fol / "static"
+
+    def load_external_paths(self) -> None:
+        """Load external files."""
+        self.sample_epub_fol = Path.home() / "repos/snippet/datasets/ebook"
 
     def __str__(self) -> str:
         s = f"EpubSummaryPaths:\n"

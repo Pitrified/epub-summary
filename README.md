@@ -36,3 +36,5 @@ poetry run pytest
 or use the VSCode interface.
 
 ## IDEAs
+
+ask for less on-the-nose narration
