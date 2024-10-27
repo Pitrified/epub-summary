@@ -1,8 +1,8 @@
 """Utils for the epubber module."""
 
+import re
 from collections import Counter
 from pathlib import Path
-import re
 
 from bs4 import BeautifulSoup, Tag
 from loguru import logger as lg
@@ -12,6 +12,11 @@ VALID_CHAP_EXT = [".xhtml", ".xml", ".html"]
 
 def find_chapter_files(zipped_file_paths: list[Path]) -> list[Path]:
     """Find text chapters in epub."""
+    # check that we have some files
+    if len(zipped_file_paths) == 0:
+        lg.warning("No files to find from.")
+        return []
+
     # get the paths that are valid xhtml and similar
     chap_file_paths = [f for f in zipped_file_paths if f.suffix in VALID_CHAP_EXT]
 
