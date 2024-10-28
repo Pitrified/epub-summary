@@ -37,6 +37,7 @@ class EpubSummaryPaths:
     def load_external_paths(self) -> None:
         """Load external files."""
         self.sample_epub_fol = Path.home() / "repos/snippet/datasets/ebook"
+        self.dump_epub_fol = Path.home() / "ephem/epub/dump"
 
     def __str__(self) -> str:
         s = f"EpubSummaryPaths:\n"
