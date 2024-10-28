@@ -1,5 +1,6 @@
 """Epub."""
 
+from abc import ABC
 from pathlib import Path
 from typing import Self
 import zipfile
@@ -8,6 +9,15 @@ from bs4 import BeautifulSoup, Tag
 from loguru import logger as lg
 
 from epub_summary.epubber.utils import find_chapter_files, str_to_p_tag, tag_to_str
+
+
+class BaseHtmlChapterParser(ABC):
+    """ABC for HtmlChapterParser."""
+
+    @staticmethod
+    def parse(html: str) -> "list[EpubParagraph]":
+        """Parse the html."""
+        raise NotImplementedError
 
 
 class EpubParagraph:
@@ -41,18 +51,36 @@ class EpubParagraph:
         return par
 
 
+class EpubSection:
+    """EpubSection."""
+
+    def __init__(self, section_title: str) -> None:
+        """Initialize epub section."""
+        self.section_title = section_title
+        self.paragraphs: list[EpubParagraph] = []
+
+    def add_paragraph(self, paragraph: EpubParagraph) -> None:
+        """Add a paragraph to the section."""
+        self.paragraphs.append(paragraph)
+
+    @property
+    def text(self) -> str:
+        """Get the text of the section."""
+        return "\n".join([p.p_str for p in self.paragraphs])
+
+
 class EpubChapter:
     """EpubChapter."""
 
     def __init__(self) -> None:
         """Initialize epub chapter."""
         self.html: str = ""
-        self.paragraphs: list[EpubParagraph] = []
+        self.sections: list[EpubSection] = []
 
     @property
     def text(self) -> str:
         """Get the text of the chapter."""
-        return "\n".join([p.p_str for p in self.paragraphs])
+        return "\n".join([s.text for s in self.sections])
 
     @text.setter
     def text(self, text: str) -> None:
@@ -72,9 +100,16 @@ class EpubChapter:
         """Set the chapter stem."""
         self.chap_stem = chap_stem
 
-    def add_paragraph(self, paragraph: EpubParagraph) -> None:
-        """Add a paragraph to the chapter."""
-        self.paragraphs.append(paragraph)
+    # def add_paragraph(self, section_title: str, paragraph: EpubParagraph) -> None:
+    #     """Add a paragraph to the chapter."""
+    #     # TODO improve, what if the section does not exist?
+    #     section_titles = [s.section_title for s in self.sections]
+    #     section_idx = section_titles.index(section_title)
+    #     self.sections[section_idx].add_paragraph(paragraph)
+
+    def add_section(self, section: EpubSection) -> None:
+        """Add a section to the chapter."""
+        self.sections.append(section)
 
     def update_soup(self) -> None:
         """Update the soup of the chapter."""
@@ -92,9 +127,11 @@ class EpubChapter:
             lg.warning(f"No paragraphs found in chapter {self.chap_stem}.")
             return
         # build the list of Paragraphs
+        sec = EpubSection("default")
         for p_tag in self.all_p_tag:
             par = EpubParagraph.from_p_tag(p_tag)
-            self.add_paragraph(par)
+            sec.add_paragraph(par)
+        self.add_section(sec)
 
     @classmethod
     def from_html(cls, html: str, chap_stem: str) -> Self:
