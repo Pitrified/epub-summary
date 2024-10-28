@@ -12,17 +12,19 @@ from epub_summary.config.chat_openai import ChatOpenAIConfig
 class ChapterRevised(BaseModel):
     """Revised chapter of a book."""
 
-    summary: str = Field(..., description="The summary of the revised chapter.")
+    # summary: str = Field(..., description="The summary of the revised chapter.")
     revised_chapter: str = Field(..., description="The revised chapter.")
 
 
 # You need to shorten the chapter roughly by half. \
+# Remove on the nose narration, and improve the overall quality of the prose, as would a book editor. \
+
+# Provide a short summary of the chapter as well. \
+
 chapter_revised_template = """You are a book editor. \
 You have a chapter to revise. \
 Maintain all the pertinent details to be able to follow the story. \
-Remove on the nose narration, and improve the overall quality of the prose, as would a book editor. \
-
-Provide a short summary of the chapter as well. \
+Improve the overall quality of the prose, and remove on the nose narration, as would a book editor. \
 
 The original chapter is: {original_chapter}
 """
