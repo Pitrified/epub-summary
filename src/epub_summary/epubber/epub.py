@@ -2,7 +2,8 @@
 
 from abc import ABC
 from pathlib import Path
-from typing import Self, Type
+from typing import Self
+import warnings
 import zipfile
 
 from bs4 import BeautifulSoup, Tag
@@ -16,7 +17,14 @@ class BaseHtmlChapterParser(ABC):
 
     def get_soup(self, html: str) -> Tag:
         """Get the soup of the html."""
-        return BeautifulSoup(markup=html, features="lxml")
+        # filter XMLParsedAsHTMLWarning
+        with warnings.catch_warnings(action="ignore"):
+            # warnings.filterwarnings(
+            #     # "ignore", category=XMLParsedAsHTMLWarning, module="bs4"
+            #     action="ignore",     category=UserWarning,     module="bs4",
+            # )
+            soup = BeautifulSoup(markup=html, features="lxml")
+        return soup
 
     def parse(self, html: str) -> "list[EpubSection]":
         """Parse the html."""
@@ -28,7 +36,6 @@ class HtmlChapterParserSingle(BaseHtmlChapterParser):
 
     def parse(self, html: str) -> "list[EpubSection]":
         """Parse the html."""
-        # TODO filter XMLParsedAsHTMLWarning
         soup = self.get_soup(html)
         body = soup.body
         if body is None:
