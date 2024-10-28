@@ -2,7 +2,7 @@
 
 from abc import ABC
 from pathlib import Path
-from typing import Self
+from typing import Self, Type
 import zipfile
 
 from bs4 import BeautifulSoup, Tag
@@ -15,9 +15,32 @@ class BaseHtmlChapterParser(ABC):
     """ABC for HtmlChapterParser."""
 
     @staticmethod
-    def parse(html: str) -> "list[EpubParagraph]":
+    def parse(cls, html: str) -> "list[EpubSection]":
         """Parse the html."""
         raise NotImplementedError
+
+
+class HtmlChapterParserSingle(BaseHtmlChapterParser):
+    """HtmlChapterParserSingle."""
+
+    @staticmethod
+    def parse(html: str) -> "list[EpubSection]":
+        """Parse the html."""
+        # TODO filter XMLParsedAsHTMLWarning
+        soup = BeautifulSoup(markup=html, features="lxml")
+        body = soup.body
+        if body is None:
+            lg.warning(f"No body found in chapter.")
+            return []
+        all_p_tag = body.find_all("p")
+        if len(all_p_tag) == 0:
+            lg.warning(f"No paragraphs found in chapter.")
+            return []
+        sec = EpubSection("default")
+        for p_tag in all_p_tag:
+            par = EpubParagraph.from_p_tag(p_tag)
+            sec.add_paragraph(par)
+        return [sec]
 
 
 class EpubParagraph:
@@ -72,10 +95,15 @@ class EpubSection:
 class EpubChapter:
     """EpubChapter."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        parser: Type[BaseHtmlChapterParser],
+    ) -> None:
         """Initialize epub chapter."""
         self.html: str = ""
         self.sections: list[EpubSection] = []
+
+        self.parser = parser
 
     @property
     def text(self) -> str:
@@ -100,43 +128,29 @@ class EpubChapter:
         """Set the chapter stem."""
         self.chap_stem = chap_stem
 
-    # def add_paragraph(self, section_title: str, paragraph: EpubParagraph) -> None:
-    #     """Add a paragraph to the chapter."""
-    #     # TODO improve, what if the section does not exist?
-    #     section_titles = [s.section_title for s in self.sections]
-    #     section_idx = section_titles.index(section_title)
-    #     self.sections[section_idx].add_paragraph(paragraph)
-
     def add_section(self, section: EpubSection) -> None:
         """Add a section to the chapter."""
         self.sections.append(section)
 
+    def add_sections(self, sections: list[EpubSection]) -> None:
+        """Add a list of sections to the chapter."""
+        self.sections.extend(sections)
+
     def update_soup(self) -> None:
         """Update the soup of the chapter."""
-        # parse the soup and get the body
-        # TODO filter XMLParsedAsHTMLWarning
-        # TODO add a custom extractor from html to paragraphs
-        self.soup = BeautifulSoup(markup=self.html, features="lxml")
-        self.body = self.soup.body
-        if self.body is None:
-            lg.warning(f"No body found in chapter {self.chap_stem}.")
-            return
-        # find the paragraphs
-        self.all_p_tag = self.body.find_all("p")
-        if len(self.all_p_tag) == 0:
-            lg.warning(f"No paragraphs found in chapter {self.chap_stem}.")
-            return
-        # build the list of Paragraphs
-        sec = EpubSection("default")
-        for p_tag in self.all_p_tag:
-            par = EpubParagraph.from_p_tag(p_tag)
-            sec.add_paragraph(par)
-        self.add_section(sec)
+        # parse the soup and get the sections
+        secs = HtmlChapterParserSingle.parse(self.html)
+        self.add_sections(secs)
 
     @classmethod
-    def from_html(cls, html: str, chap_stem: str) -> Self:
+    def from_html(
+        cls,
+        html: str,
+        chap_stem: str,
+        parser: Type[BaseHtmlChapterParser],
+    ) -> Self:
         """Create a chapter from html."""
-        chapter = cls()
+        chapter = cls(parser)
         chapter.set_chap_stem(chap_stem)
         chapter.set_html(html)
         return chapter
@@ -169,7 +183,11 @@ class Epub:
             chapter_bytes = input_zip.read(str(chapter_fp))
             chapter_html = chapter_bytes.decode("utf-8")
             # create a chapter object
-            chapter = EpubChapter.from_html(chapter_html, chapter_fp.stem)
+            chapter = EpubChapter.from_html(
+                chapter_html,
+                chapter_fp.stem,
+                HtmlChapterParserSingle,
+            )
             # add the chapter to the epub
             self.add_chapter(chapter)
 
