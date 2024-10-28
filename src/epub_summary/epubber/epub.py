@@ -80,6 +80,7 @@ class EpubChapter:
         """Update the soup of the chapter."""
         # parse the soup and get the body
         # TODO filter XMLParsedAsHTMLWarning
+        # TODO add a custom extractor from html to paragraphs
         self.soup = BeautifulSoup(markup=self.html, features="lxml")
         self.body = self.soup.body
         if self.body is None:

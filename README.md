@@ -38,3 +38,7 @@ or use the VSCode interface.
 ## IDEAs
 
 ask for less on-the-nose narration
+
+add a custom extractor from html to paragraphs
+
+a chapter can have several sections
